@@ -19,8 +19,8 @@ public class GatewaySecurityConfig {
                 .opaqueToken();
 
         http.authorizeExchange()
-//                .anyExchange()
-                .pathMatchers("/demo/**")
+                .anyExchange()
+//                .pathMatchers("/demo/**")
                 .authenticated()
                 .and()
 
