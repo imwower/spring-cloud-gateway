@@ -20,10 +20,8 @@ public class GatewaySecurityConfig {
 
         http.authorizeExchange()
                 .anyExchange()
-//                .pathMatchers("/demo/**")
                 .authenticated()
                 .and()
-
                 .csrf().disable();
         return http.build();
     }
