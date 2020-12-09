@@ -11,6 +11,8 @@ import javax.annotation.Resource;
 public class GatewaySecurityConfig {
     @Resource
     private TokenServerAuthenticationEntryPoint tokenServerAuthenticationEntryPoint;
+    @Resource
+    private AuthorizationManager authorizationManager;
 
     @Bean
     SecurityWebFilterChain springWebFilterChain(ServerHttpSecurity http) throws Exception {
@@ -20,7 +22,7 @@ public class GatewaySecurityConfig {
 
         http.authorizeExchange()
                 .anyExchange()
-                .authenticated()
+                .access(authorizationManager)
                 .and()
                 .csrf().disable();
         return http.build();
