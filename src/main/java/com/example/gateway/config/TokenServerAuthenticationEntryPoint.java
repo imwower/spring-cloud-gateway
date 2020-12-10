@@ -1,6 +1,7 @@
 package com.example.gateway.config;
 
 import com.example.gateway.util.JSONUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,21 +26,28 @@ public class TokenServerAuthenticationEntryPoint implements ServerAuthentication
 
     @Override
     public Mono<Void> commence(ServerWebExchange exchange, AuthenticationException authException) {
+        Map<String, Object> parameters = createParameters(authException);
+        String wwwAuthenticate = computeWWWAuthenticateHeaderValue(parameters);
+        String body = "{}";
+        try {
+            body = JSONUtils.toJson(parameters);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        String finalBody = body;
         Mono<Void> defer = Mono.defer(() -> {
             HttpStatus status = getStatus(authException);
-
-            Map<String, Object> parameters = createParameters(authException);
-            String wwwAuthenticate = computeWWWAuthenticateHeaderValue(parameters);
             ServerHttpResponse response = exchange.getResponse();
             response.getHeaders().set(HttpHeaders.WWW_AUTHENTICATE, wwwAuthenticate);
             response.getHeaders().set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-            String body = JSONUtils.toJson(parameters);
-            DataBuffer wrap = response.bufferFactory().wrap(body.getBytes(Charset.forName("UTF-8")));
+            DataBuffer wrap = response.bufferFactory().wrap(finalBody.getBytes(Charset.forName("UTF-8")));
             response.setStatusCode(status);
             return response.writeWith(Mono.just(wrap));
         });
+
         return defer;
     }
+
 
     private Map<String, Object> createParameters(AuthenticationException authException) {
         Map<String, Object> parameters = new LinkedHashMap<>();
