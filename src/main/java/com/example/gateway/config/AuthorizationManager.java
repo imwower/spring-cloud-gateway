@@ -17,6 +17,7 @@ import java.util.*;
 public class AuthorizationManager implements ReactiveAuthorizationManager<AuthorizationContext> {
     private static Map<String, List<String>> paths = new HashMap<String, List<String>>() {
         {
+            put("/user/**", Arrays.asList("ROLE_USER", "ROLE_ADMIN"));
             put("/demo/demo/**", Arrays.asList("ROLE_USER", "ROLE_ADMIN"));
             put("/demo/admin/**", Arrays.asList("ROLE_ADMIN"));
         }
@@ -29,7 +30,7 @@ public class AuthorizationManager implements ReactiveAuthorizationManager<Author
     }
 
     private boolean checkAuthorities(ServerWebExchange exchange, Authentication authentication) {
-        List<String> auths = new ArrayList<>();
+        Set<String> auths = new HashSet<>();
         AntPathMatcher pathMatcher = new AntPathMatcher();
         String path = exchange.getRequest().getURI().getPath();
         paths.forEach((k, v) -> {
@@ -39,11 +40,12 @@ public class AuthorizationManager implements ReactiveAuthorizationManager<Author
             }
         });
 
-        Object principal = authentication.getPrincipal();
         boolean granted = false;
         Object authoritiesJson = ((BearerTokenAuthentication) authentication).getTokenAttributes().get("authorities");
         if (authoritiesJson != null && authoritiesJson instanceof JSONArray) {
-            granted = ((JSONArray) authoritiesJson).stream().anyMatch(a -> auths.contains(a));
+            granted = ((JSONArray) authoritiesJson)
+                    .stream()
+                    .anyMatch(a -> auths.contains(a));
         }
         return granted;
     }
